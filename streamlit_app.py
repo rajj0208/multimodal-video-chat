@@ -21,35 +21,56 @@ st.markdown("""
 <style>
     .main-header {
         text-align: center;
-        color: #2E86AB;
+        color: #1565C0;
         margin-bottom: 2rem;
+        font-weight: 600;
     }
     .chat-container {
         background-color: #f8f9fa;
+        color: #212529;
         padding: 1rem;
         border-radius: 10px;
         margin: 1rem 0;
+        border: 1px solid #dee2e6;
     }
     .user-message {
-        background-color: #e3f2fd;
+        background-color: #1976d2;
+        color: #ffffff;
         padding: 0.8rem;
         border-radius: 10px;
         margin: 0.5rem 0;
-        border-left: 4px solid #2196f3;
+        border-left: 4px solid #0d47a1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .user-message strong {
+        color: #e3f2fd;
+        font-weight: 600;
     }
     .assistant-message {
-        background-color: #f3e5f5;
+        background-color: #7b1fa2;
+        color: #ffffff;
         padding: 0.8rem;
         border-radius: 10px;
         margin: 0.5rem 0;
-        border-left: 4px solid #9c27b0;
+        border-left: 4px solid #4a148c;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .assistant-message strong {
+        color: #f3e5f5;
+        font-weight: 600;
     }
     .video-info {
-        background-color: #fff3e0;
+        background-color: #e65100;
+        color: #ffffff;
         padding: 1rem;
         border-radius: 10px;
-        border-left: 4px solid #ff9800;
+        border-left: 4px solid #bf360c;
         margin: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .video-info h3 {
+        color: #fff3e0;
+        margin-top: 0;
     }
 </style>
 """, unsafe_allow_html=True)
