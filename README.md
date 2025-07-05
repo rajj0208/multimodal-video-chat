@@ -2,7 +2,13 @@
 
 An AI-powered video analysis application that allows users to upload videos, extract frames, and have interactive conversations about video content using advanced multimodal AI models.
 
-## 🌟 Features
+## � Demo
+
+![Multimodal Video Chat Demo](assets/demo.gif)
+
+*Upload videos, ask questions, and get AI-powered responses with relevant frame visualizations*
+
+## �🌟 Features
 
 - **Video Upload & Processing**: Upload videos and automatically extract frames with AI-generated descriptions
 - **Multimodal Search**: Search through video content using both visual and textual information

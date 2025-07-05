@@ -31,7 +31,7 @@ class VideoPreprocessor:
     def lvlm_inference(self, prompt, image, max_tokens: int = 200, temperature: float = 0.7):
         """Generate description for an image using Gemini AI."""
         try:
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemma-3-27b-it')
             content = [prompt]
             
             def base64_to_pil_image(base64_string):
@@ -49,10 +49,24 @@ class VideoPreprocessor:
                 )
             )
             
+            # Check if response was blocked
+            if not response.candidates or len(response.candidates) == 0:
+                if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
+                    if response.prompt_feedback.block_reason:
+                        print(f"⚠️ Content blocked by safety filters: {response.prompt_feedback.block_reason}")
+                        return None  # Return None to indicate blocked content
+                return None
+            
             return response.text
             
         except Exception as e:
-            raise RuntimeError(f"Error generating response with Gemini: {e}")
+            # Check if it's a blocked content error
+            if "blocked prompt" in str(e).lower() or "prohibited_content" in str(e).lower():
+                print(f"⚠️ Frame skipped due to content policy: {e}")
+                return None
+            # For other errors, still return None to skip the frame
+            print(f"⚠️ Frame skipped due to processing error: {e}")
+            return None
     
     def download_video(self, video_url, path='/tmp/'):
         """Download video from YouTube URL or return local file path."""
@@ -121,6 +135,9 @@ class VideoPreprocessor:
         hop = round(fps / num_of_extracted_frames_per_second) 
         curr_frame = 0
         idx = -1
+        skipped_frames = 0
+        
+        print(f"📹 Starting frame extraction (FPS: {fps}, extracting every {hop} frames)")
         
         while True:
             ret, frame = video.read()
@@ -135,18 +152,45 @@ class VideoPreprocessor:
                 img_fpath = osp.join(path_to_save_extracted_frames, img_fname)
                 cv2.imwrite(img_fpath, image)
 
-                b64_image = self.encode_image(img_fpath)
-                caption = self.lvlm_inference(self.lvlm_prompt, b64_image)
+                try:
+                    b64_image = self.encode_image(img_fpath)
+                    caption = self.lvlm_inference(self.lvlm_prompt, b64_image)
                     
-                metadata = {
-                    'extracted_frame_path': img_fpath,
-                    'transcript': caption,
-                    'video_segment_id': idx,
-                    'video_path': path_to_video,
-                }
-                metadatas.append(metadata)
+                    # Check if caption generation was successful
+                    if caption is None:
+                        print(f"⏭️ Skipping frame {idx} due to content restrictions")
+                        skipped_frames += 1
+                        # Remove the saved image file since we're skipping this frame
+                        if os.path.exists(img_fpath):
+                            os.remove(img_fpath)
+                        continue
+                    
+                    metadata = {
+                        'extracted_frame_path': img_fpath,
+                        'transcript': caption,
+                        'video_segment_id': idx,
+                        'video_path': path_to_video,
+                    }
+                    metadatas.append(metadata)
+                    
+                    if len(metadatas) % 10 == 0:
+                        print(f"✅ Processed {len(metadatas)} frames, skipped {skipped_frames} frames")
+                        
+                except Exception as e:
+                    print(f"⏭️ Skipping frame {idx} due to error: {e}")
+                    skipped_frames += 1
+                    # Remove the saved image file since we're skipping this frame
+                    if os.path.exists(img_fpath):
+                        os.remove(img_fpath)
+                    continue
             
             curr_frame += 1
+        
+        video.release()
+        
+        print(f"🎬 Frame extraction completed!")
+        print(f"📊 Total frames processed: {len(metadatas)}")
+        print(f"⚠️ Frames skipped: {skipped_frames}")
             
         metadatas_path = osp.join(path_to_save_metadatas, 'metadatas.json')
         with open(metadatas_path, 'w') as outfile:
